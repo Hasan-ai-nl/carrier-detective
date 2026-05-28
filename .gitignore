@@ -1,0 +1,26 @@
+# --- secrets ---
+.env
+
+# --- python ---
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# --- runtime artifacts (sqlite cache, screenshots, logs) ---
+scans.db
+*.png
+*.log
+*.log.err
+
+# --- local dev tooling not for prod ---
+cloudflared.exe
+_slice5_gate.py
+
+# --- OS/editor ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.code-workspace
+.claude/

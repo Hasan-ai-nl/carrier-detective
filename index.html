@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>carrier·detective</title>
+<style>
+  :root {
+    --bg: #fafafa;
+    --card: #ffffff;
+    --border: #e5e5e5;
+    --text: #0a0a0a;
+    --muted: #737373;
+    --accent: #d946ef;
+    --orange: #f59e0b;
+    --gray: #6b7280;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: ui-monospace, Menlo, Consolas, "Courier New", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0a0a0a;
+      --card: #141414;
+      --border: #262626;
+      --text: #e5e5e5;
+      --muted: #737373;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-weight: 400;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 32px 24px 96px;
+  }
+  .wordmark {
+    font-family: var(--mono);
+    color: var(--muted);
+    font-size: 13px;
+    text-transform: lowercase;
+    letter-spacing: 0.01em;
+    margin-bottom: 48px;
+  }
+  h1 {
+    font-size: 32px;
+    font-weight: 600;
+    line-height: 1.2;
+    margin: 0 0 48px;
+    letter-spacing: -0.01em;
+  }
+  .scan-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 48px;
+  }
+  input[type=url], input[type=text] {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--card);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 14px;
+    outline: none;
+    transition: opacity 150ms ease-out;
+  }
+  input:focus {
+    box-shadow: 0 0 0 2px var(--accent);
+    border-color: transparent;
+  }
+  button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #ffffff;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 150ms ease-out;
+  }
+  button:hover { opacity: 0.85; }
+  button:focus { outline: none; box-shadow: 0 0 0 2px var(--accent), 0 0 0 4px var(--bg); }
+  button:disabled { opacity: 0.55; cursor: not-allowed; }
+
+  .status {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 24px;
+    min-height: 1.5em;
+  }
+  .dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: var(--muted);
+    border-radius: 999px;
+    margin-right: 8px;
+    vertical-align: 1px;
+    animation: pulse 1s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.35; }
+    50%      { opacity: 1; }
+  }
+
+  .results { display: flex; flex-direction: column; gap: 16px; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .card-error {
+    color: var(--muted);
+  }
+  .card-error strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+  .error-detail {
+    margin-top: 6px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .carrier-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .carrier-name {
+    font-size: 18px;
+    font-weight: 600;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .pill {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    color: #ffffff;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: lowercase;
+    letter-spacing: 0.02em;
+  }
+  .pill-high   { background: var(--accent); }
+  .pill-medium { background: var(--orange); }
+  .pill-low    { background: var(--gray); }
+
+  .signals {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .signal {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .signal .layer {
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 2px 8px;
+  }
+  .signal .url { color: var(--text); word-break: break-all; }
+  .signal .arrow { color: var(--muted); }
+  .signal .conf { color: var(--muted); }
+  .signal .check { color: var(--muted); }
+
+  .empty {
+    text-align: left;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 13px;
+  }
+
+  .meta {
+    margin-top: 24px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .meta .sep { padding: 0 8px; }
+  .meta code { color: var(--text); }
+  .cached-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+
+  details.history {
+    margin-top: 64px;
+    border-top: 1px solid var(--border);
+    padding-top: 24px;
+  }
+  details.history summary {
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--muted);
+    list-style: none;
+  }
+  details.history summary::-webkit-details-marker { display: none; }
+  details.history summary::before { content: "→ "; color: var(--muted); }
+  details.history[open] summary::before { content: "↓ "; }
+  .hist-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 16px;
+    margin-bottom: 8px;
+  }
+  .hist-clear {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    cursor: pointer;
+    font-weight: 400;
+  }
+  .hist-clear:hover { color: var(--text); border-color: var(--muted); }
+  details.history .hist-list {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .hist-row {
+    display: flex;
+    gap: 12px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .hist-row:last-child { border-bottom: none; }
+  .hist-row .h-shop { color: var(--text); flex: 1 1 auto; word-break: break-all; }
+  .hist-row .h-count { color: var(--text); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="wordmark">carrier·detective</div>
+  <h1>Which couriers does a webshop actually use?</h1>
+
+  <form class="scan-row" id="scan-form" autocomplete="off">
+    <input type="url" id="url-input" placeholder="https://www.example.com" spellcheck="false" required>
+    <button type="submit" id="scan-btn">Scan</button>
+  </form>
+
+  <div class="status" id="status"></div>
+
+  <div class="results" id="results"></div>
+
+  <div class="meta" id="meta"></div>
+
+  <details class="history" id="history">
+    <summary>Recent scans</summary>
+    <div class="hist-list" id="hist-list"></div>
+  </details>
+</div>
+
+<script>
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, c =>
+      ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+  }
+
+  function renderCarriers(data) {
+    const root = document.getElementById('results');
+    root.innerHTML = '';
+    if (data.error) {
+      const FRIENDLY = {
+        DNS_FAIL:    "We couldn't find that domain. Check the spelling.",
+        BOT_BLOCKED: "This shop blocks automated scans. We weren't able to read its pages.",
+        TIMEOUT:     "The shop didn't respond in time. Try again later.",
+        UNREACHABLE: "We couldn't reach the shop.",
+        INVALID_URL: "URL must start with http:// or https://"
+      };
+      const card = document.createElement('div');
+      card.className = 'card card-error';
+      card.setAttribute('data-error', data.error);
+      const friendly = FRIENDLY[data.error] || "Scan failed.";
+      const detail = data.error_detail || '';
+      card.innerHTML =
+        '<strong>' + esc(friendly) + '</strong>' +
+        (detail ? '<div class="error-detail">' + esc(detail) + '</div>' : '');
+      root.appendChild(card);
+      return;
+    }
+    if (!data.carriers || data.carriers.length === 0) {
+      const card = document.createElement('div');
+      card.className = 'card empty';
+      card.textContent = 'No carriers detected on the pages we could reach.';
+      root.appendChild(card);
+      return;
+    }
+    for (const c of data.carriers) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.setAttribute('data-carrier', c.name);
+
+      const head = document.createElement('div');
+      head.className = 'carrier-head';
+      head.innerHTML =
+        '<div class="carrier-name">' + esc(c.name) + '</div>' +
+        '<span class="pill pill-' + esc(c.confidence) + '">' + esc(c.confidence) + '</span>';
+      card.appendChild(head);
+
+      const sigs = document.createElement('div');
+      sigs.className = 'signals';
+      for (const s of c.signals) {
+        const row = document.createElement('div');
+        row.className = 'signal';
+        row.innerHTML =
+          '<span class="check">✓</span>' +
+          '<span class="layer">' + esc(s.layer) + '</span>' +
+          '<span class="url">' + esc(s.url) + '</span>' +
+          '<span class="arrow">→</span>' +
+          '<span class="conf">' + esc(s.confidence) + '%</span>';
+        sigs.appendChild(row);
+      }
+      card.appendChild(sigs);
+      root.appendChild(card);
+    }
+  }
+
+  function renderMeta(data) {
+    const m = document.getElementById('meta');
+    if (!data || data.error) { m.innerHTML = ''; return; }
+    const pages = (data.pages_scanned || []).map(p => '<code>' + esc(p) + '</code>').join(' · ');
+    let cachedHtml = '';
+    if (data.cached && data.cached_at) {
+      const ts = new Date(data.cached_at);
+      const daysAgo = Math.max(0, Math.floor((Date.now() - ts.getTime()) / 86400000));
+      const label = daysAgo === 0 ? 'today' : (daysAgo === 1 ? '1 day ago' : daysAgo + ' days ago');
+      cachedHtml = '<span class="cached-badge">cached ' + esc(label) + '</span><span class="sep">·</span>';
+    }
+    m.innerHTML =
+      cachedHtml +
+      'scanned <code>' + esc(data.shop || '') + '</code>' +
+      '<span class="sep">·</span>' +
+      esc(data.duration_s) + 's' +
+      '<span class="sep">·</span>' +
+      pages;
+  }
+
+  function clearStatus() { document.getElementById('status').innerHTML = ''; }
+  function setLoading() {
+    document.getElementById('status').innerHTML =
+      '<span class="dot"></span><span>Scanning…</span>';
+  }
+
+  async function loadHistory() {
+    try {
+      const r = await fetch('/scans');
+      if (!r.ok) return;
+      const rows = await r.json();
+      const list = document.getElementById('hist-list');
+      list.innerHTML = '';
+      if (!rows.length) {
+        const empty = document.createElement('div');
+        empty.className = 'hist-row';
+        empty.textContent = 'No scans yet.';
+        list.appendChild(empty);
+        return;
+      }
+      const header = document.createElement('div');
+      header.className = 'hist-header';
+      header.innerHTML = '<span></span><button class="hist-clear" id="clear-btn">clear all</button>';
+      list.appendChild(header);
+      document.getElementById('clear-btn').addEventListener('click', async () => {
+        await fetch('/scans', {method: 'DELETE'});
+        loadHistory();
+      });
+      for (const row of rows) {
+        const el = document.createElement('div');
+        el.className = 'hist-row';
+        const ts = (row.scanned_at || '').replace('T', ' ').replace(/\..*$/, '').replace('Z', '');
+        const names = (row.carriers || []).join(', ') || 'no carriers';
+        el.innerHTML =
+          '<span class="h-shop">' + esc(row.shop) + '</span>' +
+          '<span>' + esc(ts) + '</span>' +
+          '<span class="h-count">' + esc(names) + '</span>';
+        list.appendChild(el);
+      }
+    } catch (_) {}
+  }
+
+  async function runScan(url) {
+    document.getElementById('scan-btn').disabled = true;
+    document.getElementById('status').innerHTML =
+      '<span class="dot"></span><span>Scanning…</span>';
+    document.getElementById('results').innerHTML = '';
+    document.getElementById('meta').innerHTML = '';
+    let data;
+    try {
+      const r = await fetch('/scan', {
+        method: 'POST',
+        headers: {'content-type': 'application/json'},
+        body: JSON.stringify({url})
+      });
+      data = await r.json();
+    } catch (e) {
+      data = {error: 'network error: ' + String(e)};
+    }
+    document.getElementById('status').innerHTML = '';
+    document.getElementById('scan-btn').disabled = false;
+    renderCarriers(data);
+    renderMeta(data);
+    loadHistory();
+  }
+
+  document.getElementById('scan-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const url = document.getElementById('url-input').value.trim();
+    if (!url) return;
+    runScan(url);
+  });
+
+  loadHistory();
+</script>
+</body>
+</html>

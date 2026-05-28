@@ -1,0 +1,7 @@
+fastapi==0.136.*
+uvicorn[standard]==0.48.*
+curl_cffi==0.15.*
+tldextract==5.3.*
+wappalyzer==2.0.*
+beautifulsoup4==4.14.*
+firecrawl-py==4.28.*

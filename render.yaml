@@ -1,0 +1,20 @@
+# Render.com deployment manifest for Carrier Detective v2.
+# Free tier: web service spins down after 15min idle (~30-60s cold start).
+# No persistent disk on free tier — scans.db resets on every container restart,
+# which means Slice 4 cache-fallback works within a single live instance only.
+services:
+  - type: web
+    name: carrier-detective
+    runtime: python
+    plan: free
+    region: frankfurt
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    pythonVersion: "3.12"
+    envVars:
+      # Firecrawl API key — paste the actual value in the Render dashboard
+      # AFTER initial deploy. Do NOT commit it. main.py reads it from
+      # os.environ.get("api_key") or os.environ.get("FIRECRAWL_API_KEY").
+      - key: api_key
+        sync: false
+    healthCheckPath: /
