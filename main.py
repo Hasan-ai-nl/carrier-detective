@@ -259,6 +259,16 @@ def _score_path(path: str) -> int:
     return sum(1 for s in STEMS if s in p)
 
 
+def _norm_path(path: str) -> str:
+    """Normalize URL path for dedup: strip trailing slash except root.
+    Prevents discovery from wasting candidate slots on /foo and /foo/ as if
+    they were distinct pages (verified on degalazaak.nl)."""
+    p = path or "/"
+    if len(p) > 1 and p.endswith("/"):
+        p = p[:-1]
+    return p
+
+
 def _curl_get(url: str, impersonate: str = "chrome131", timeout: int = 8) -> tuple[int, str]:
     """Single curl_cffi GET; returns (status, body). Caller handles labeling.
     Used for sitemap.xml / robots.txt — auxiliary fetches not in the main cascade."""
@@ -464,11 +474,11 @@ def _discover_anchors_from_html(base: str, homepage_html: str) -> list[str]:
         if score > 0:
             candidates.append((abs_url, score))
     candidates.sort(key=lambda x: x[1], reverse=True)
-    # Deduplicate by path while preserving order.
+    # Deduplicate by normalized path while preserving order.
     seen_paths: set[str] = set()
     kept: list[str] = []
     for u, _ in candidates:
-        p = urlparse(u).path or "/"
+        p = _norm_path(urlparse(u).path)
         if p in seen_paths:
             continue
         seen_paths.add(p)
@@ -585,7 +595,7 @@ def detect(url: str) -> dict:
     candidates: list[str] = [shop + "/"]
     seen_paths: set[str] = {"/"}
     for u in sm_urls + anchor_urls + fc_link_urls:
-        p = urlparse(u).path or "/"
+        p = _norm_path(urlparse(u).path)
         if p in seen_paths:
             continue
         seen_paths.add(p)
@@ -615,7 +625,7 @@ def detect(url: str) -> dict:
                     map_urls.append(u)
             print(f"[discover] firecrawl map -> {len(map_links)} total, {len(map_urls)} stem-matching")
             for u in map_urls:
-                p = urlparse(u).path or "/"
+                p = _norm_path(urlparse(u).path)
                 if p in seen_paths:
                     continue
                 seen_paths.add(p)
